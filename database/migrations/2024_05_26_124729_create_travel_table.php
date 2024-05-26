@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('travel', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->boolean('is_public')->nullable()->default(false);
             $table->string('slug')->unique();
             $table->string('name');
