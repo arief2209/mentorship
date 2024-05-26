@@ -20,7 +20,7 @@ class Travel extends Model
         'number_of_days'
     ];
 
-    public function tours(): HasMany
+    public function tours()
     {
         return $this->hasMany(Tour::class);
     }
@@ -46,4 +46,11 @@ class Travel extends Model
     {
         return $this->number_of_days - 1;
     }
+
+    // alaternative is using this method (route model binding)
+    // Route::get('travels/{travel}/tours', [TourController::class, 'index']);
+    // public function getRouteKeyName()
+    // {
+    //     return 'slug';
+    // }
 }
