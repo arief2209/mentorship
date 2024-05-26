@@ -34,15 +34,16 @@ class Travel extends Model
         ];
     }
 
-    public function numberOfNights(): Attribute
-    {
-        return Attribute::make(
-            get: fn($value, $attributes) => $attributes['number_of_days'] - 1
-        );
-    }
-
-    // public function getNumberOfNightsAttribute()
+    // laravel 10
+    // public function numberOfNights(): Attribute
     // {
-    //     return $this->number_of_days - 1;
+    //     return Attribute::make(
+    //         get: fn($value, $attributes) => $attributes['number_of_days'] - 1
+    //     );
     // }
+
+    public function getNumberOfNightsAttribute()
+    {
+        return $this->number_of_days - 1;
+    }
 }
