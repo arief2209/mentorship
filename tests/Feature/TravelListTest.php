@@ -11,6 +11,7 @@ class TravelListTest extends TestCase
 {
     // use it coutiously cuz can wipe all the database 
     use RefreshDatabase;
+    private $travelEndPoint = '/api/v1/travels';
 
     public function test_travels_list_returns_paginated_data_correctly()
     {
@@ -18,7 +19,7 @@ class TravelListTest extends TestCase
             'is_public' => true
         ]);
 
-        $response = $this->get('/api/v1/travels');
+        $response = $this->get($this->travelEndPoint);
 
         $response->assertStatus(200);
         $response->assertJsonCount(15, 'data');
@@ -34,7 +35,7 @@ class TravelListTest extends TestCase
             'is_public' => false
         ]);
 
-        $response = $this->get('/api/v1/travels');
+        $response = $this->get($this->travelEndPoint);
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');

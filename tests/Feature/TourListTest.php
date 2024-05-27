@@ -80,4 +80,104 @@ class TourListTest extends TestCase
         $response->assertJsonCount(15, 'data');
         $response->assertJsonPath('meta.last_page', 2);
     }
+
+    public function test_tours_list_sorts_by_starting_date_correctly()
+    {
+        $travel = Travel::factory()->create();
+        $laterTour = Tour::factory()->create([
+            'travel_id' => $travel->id,
+            'starting_date' => now()->addDays(2),
+            'ending_date' => now()->addDays(3),
+        ]);
+
+        $earlierTour = Tour::factory()->create([
+            'travel_id' => $travel->id,
+            'starting_date' => now()->addDays(),
+            'ending_date' => now()->addDays(1),
+        ]);
+
+        $response = $this->get('/api/v1/travels/' . $travel->slug . '/tours');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.0.id', $earlierTour->id);
+        $response->assertJsonPath('data.1.id', $laterTour->id);
+    }
+
+    public function test_tours_list_sorts_by_price_correctly()
+    {
+        $travel = Travel::factory()->create();
+        $expensiveTour = Tour::factory()->create([
+            'travel_id' => $travel->id,
+            'price' => 200,
+        ]);
+
+        $cheapLaterTour = Tour::factory()->create([
+            'travel_id' => $travel->id,
+            'price' => 100,
+            'starting_date' => now()->addDays(2),
+            'ending_date' => now()->addDays(3),
+        ]);
+
+        $cheapEarlierTour = Tour::factory()->create([
+            'travel_id' => $travel->id,
+            'price' => 100,
+            'starting_date' => now()->addDays(),
+            'ending_date' => now()->addDays(1),
+        ]);
+
+        $response = $this->get('/api/v1/travels/' . $travel->slug . '/tours?sortBy=price&sortOrder=asc');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.0.id', $cheapEarlierTour->id);
+        $response->assertJsonPath('data.1.id', $cheapLaterTour->id);
+        $response->assertJsonPath('data.2.id', $expensiveTour->id);
+
+    }
+
+    public function test_tours_list_filters_by_price_correctly()
+    {
+        $travel = Travel::factory()->create();
+        $expensiveTour = Tour::factory()->create([
+            'travel_id' => $travel->id,
+            'price' => 200,
+        ]);
+
+        $cheapTour = Tour::factory()->create([
+            'travel_id' => $travel->id,
+            'price' => 100,
+        ]);
+
+        $endPoint = '/api/v1/travels/' . $travel->slug . '/tours';
+
+        $response = $this->get($endPoint . '?priceFrom=100');
+        $response->assertJsonCount(2, 'data');
+        $response->assertJsonFragment(['id' => $cheapTour->id]);
+        $response->assertJsonFragment(['id' => $expensiveTour->id]);
+
+        $response = $this->get($endPoint . '?priceFrom=150');
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonMissing(['id' => $cheapTour->id]);
+        $response->assertJsonFragment(['id' => $expensiveTour->id]);
+
+        $response = $this->get($endPoint . '?priceFrom=250');
+        $response->assertJsonCount(0, 'data');
+
+        $response = $this->get($endPoint . '?priceTo=200');
+        $response->assertJsonCount(2, 'data');
+        $response->assertJsonFragment(['id' => $cheapTour->id]);
+        $response->assertJsonFragment(['id' => $expensiveTour->id]);
+
+        $response = $this->get($endPoint . '?priceTo=150');
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonMissing(['id' => $expensiveTour->id]);
+        $response->assertJsonFragment(['id' => $cheapTour->id]);
+
+        $response = $this->get($endPoint . '?priceTo=50');
+        $response->assertJsonCount(0, 'data');
+
+        $response = $this->get($endPoint . '?priceFrom=150&priceTo=250');
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonMissing(['id' => $cheapTour->id]);
+        $response->assertJsonFragment(['id' => $expensiveTour->id]);
+    }
 }
